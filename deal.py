@@ -97,11 +97,7 @@ class Exportador:
         df.to_excel(file_name, index=False)
         return file_name
 
-class DealMinerApp:
-    def __init__(self):
-        st.set_page_config(page_title="DealMiner", page_icon="🛒")
-        self.exportador = Exportador()
-
+class Sincronizador:
     def get_product_info_amazon(self, url):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -200,6 +196,12 @@ class DealMinerApp:
 
         return resultados
 
+class DealMinerApp:
+    def __init__(self):
+        st.set_page_config(page_title="DealMiner", page_icon="🛒")
+        self.exportador = Exportador()
+        self.sincronizador = Sincronizador()
+
     def run(self):
         st.title("🛒 Comparador de precios: Amazon + Mercado Libre")
         search_query = st.text_input("Introduce tu búsqueda:")
@@ -211,9 +213,9 @@ class DealMinerApp:
 
             with st.spinner("🔎 Buscando productos..."):
                 if "Amazon" in tiendas:
-                    urls_amazon = self.get_search_results_amazon(search_query)
+                    urls_amazon = self.sincronizador.get_search_results_amazon(search_query)
                     for url in urls_amazon[:10]:
-                        titulo, imagen, precio = self.get_product_info_amazon(url)
+                        titulo, imagen, precio = self.sincronizador.get_product_info_amazon(url)
                         if titulo != 'No title found' and precio is not None:
                             resultados.append({
                                 "Fecha": datetime.now().strftime('%Y-%m-%d'),
@@ -225,7 +227,7 @@ class DealMinerApp:
                             })
 
                 if "Mercado Libre" in tiendas:
-                    resultados.extend(self.buscar_en_mercado_libre(search_query, limite=10))
+                    resultados.extend(self.sincronizador.buscar_en_mercado_libre(search_query, limite=10))
 
             if resultados:
                 resultados_ordenados = sorted(resultados, key=lambda x: x["Precio"])
